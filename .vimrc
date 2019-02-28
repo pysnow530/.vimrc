@@ -261,11 +261,39 @@ augroup filetype_javascript
     autocmd FileType javascript nnoremap <buffer> <localleader>c :!eslint --no-eslintrc %<cr>
 augroup END
 
+function! GetGitRootDir()
+    let curr_path = '%:p:h'
+
+    for i in range(10)
+        if isdirectory(expand(curr_path) . '/.git')
+            return expand(curr_path)
+        endif
+
+        let curr_path = curr_path . ':h'
+    endfor
+
+    return ''
+endfunction
+
+function! RunWithPython(exe_cmd_tmpl)
+    let root_dir = GetGitRootDir()
+    if (root_dir != '' && filereadable(root_dir . '/.env/bin/python'))
+        let python_path = root_dir . '/.env/bin/python'
+    elseif (root_dir != '' && filereadable(root_dir . '/.venv/bin/python'))
+        let python_path = root_dir . '/.venv/bin/python'
+    else
+        let python_path = 'python'
+    endif
+
+    let exec_cmd = substitute(a:exe_cmd_tmpl, '{python_path}', python_path, '')
+    exec exec_cmd
+endfunction
+
 augroup filetype_python
     autocmd!
-    autocmd FileType python nnoremap <buffer> <localleader>r :!python %<cr>
-    autocmd FileType python vnoremap <buffer> <localleader>r :w !python<cr>
-    autocmd FileType python nnoremap <buffer> <localleader>i :!python<cr>
+    autocmd FileType python nnoremap <buffer> <localleader>r :call RunWithPython('!{python_path} %')<cr>
+    autocmd FileType python vnoremap <buffer> <localleader>r :call RunWithPython('w !{python_path}')<cr>
+    autocmd FileType python nnoremap <buffer> <localleader>i :call RunWithPython('!{python_path}')<cr>
     autocmd FileType python nnoremap <buffer> <localleader>c :call flake8#Flake8()<cr>
 augroup END
 
