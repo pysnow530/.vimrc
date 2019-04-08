@@ -1,3 +1,4 @@
+" {{{ description
 " pysnow530's vimrc file.
 "
 " Maintainer:   pysnow530 <pysnow530@163.com>
@@ -14,9 +15,16 @@
 "
 " 3. vim or nvim, then :PlugInstall
 
+" Q: Why not vim8 packages?
+" A: Packages will stuck in some plugins.
+
 " leaders
+" Q: Why not SPACE for leader?
+" A: Because it will delay when I input SPACE in insert mode. Any idea?
+"    Comma will be fine cause it always followed by space or new line.
 let mapleader = ","
 let maplocalleader = '\'
+" }}}
 
 " {{{ style preferences
 syntax on
@@ -47,7 +55,23 @@ endf
 set statusline=%!StatusLineWrapper()
 set laststatus=2
 
-nnoremap <SPACE> za
+fun! ToggleAllFolds() abort
+    let closed = 0
+    for ln in range(1, line('$'))
+        if closed == 0 && foldclosed(ln) != -1
+            let closed = 1
+        endif
+    endfor
+    echo closed
+
+    if closed == 1
+        exe 'normal zR'
+    else
+        exe 'normal zM'
+    endif
+endf
+nnoremap <TAB> za
+nnoremap <S-TAB> :call ToggleAllFolds()<cr>
 " }}}
 
 " {{{ edit preferences
@@ -83,7 +107,7 @@ function! DeleteBufferOrCloseWindow() abort
     endif
 endfunction
 nnoremap <leader>q :call DeleteBufferOrCloseWindow()<cr>
-nnoremap <leader>. :e ~/.vimrc<cr>
+nnoremap <leader>s :e ~/.vimrc<cr>
 if isdirectory('.git') || isdirectory('../.git') || isdirectory('../../.git')
     set grepprg=git\ grep\ -n\ $*
 else
@@ -99,7 +123,6 @@ nnoremap <c-l> <c-w>l
 nnoremap <leader>k :q<cr>
 nnoremap <leader><leader> q:
 nnoremap <leader>j :w<cr>
-inoremap <leader>j <esc>:w<cr>
 
 function! ToggleWrap()
     if &wrap == 1
@@ -115,12 +138,12 @@ nnoremap <leader>w :call ToggleWrap()<cr>
 filetype off
 
 call plug#begin()
-Plug 'VundleVim/Vundle.vim'
+" Plug 'VundleVim/Vundle.vim'
 Plug 'msanders/snipmate.vim'
 Plug 'hynek/vim-python-pep8-indent'
 Plug 'mattn/emmet-vim'
 Plug 'airblade/vim-gitgutter'
-Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+Plug 'scrooloose/nerdtree'
 Plug 'majutsushi/tagbar'
 Plug 'lvht/tagbar-markdown'
 Plug 'pysnow530/snipmate-snippets'
@@ -129,7 +152,7 @@ Plug 'christoomey/vim-sort-motion'
 Plug 'tpope/vim-surround'
 Plug 'altercation/vim-colors-solarized'
 Plug 'ap/vim-css-color'
-Plug 'kchmck/vim-coffee-script'
+" Plug 'kchmck/vim-coffee-script'
 Plug 'tpope/vim-fugitive'
 Plug 'godlygeek/tabular'
 Plug 'nvie/vim-flake8'
@@ -139,13 +162,14 @@ Plug 'udalov/kotlin-vim'
 Plug 'pysnow530/rfc.vim'
 Plug 'vim-scripts/argtextobj.vim'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'pysnow530/nginx.vim'
-Plug 'fatih/vim-go'
+" Plug 'pysnow530/nginx.vim'
+" Plug 'fatih/vim-go'
 Plug 'justinmk/vim-sneak'
 Plug 'rhysd/clever-f.vim'
 Plug 'Valloric/YouCompleteMe'
 Plug 'wakatime/vim-wakatime'
-Plug 'ledger/vim-ledger'
+" Plug 'ledger/vim-ledger'
+Plug 'bounceme/restclient.vim'
 call plug#end()
 
 " snipmate.vim
@@ -156,7 +180,7 @@ let g:user_emmet_leader_key = '<leader>e'
 
 " nerdtree
 let g:NERDTreeQuitOnOpen = 0
-nmap <leader>n :NERDTreeToggle<cr>
+nnoremap <leader>n :NERDTreeToggle<cr>
 let NERDTreeIgnore = ['\~$', '\.class$', '\.pyc$']
 
 " tagbar
@@ -188,7 +212,7 @@ let g:tagbar_type_go = {
     \ 'ctagsargs' : '-sort -silent'
 \ }
 let g:tagbar_autofocus = 1
-nmap <leader>t :TagbarToggle<cr>
+nnoremap <leader>t :TagbarToggle<cr>
 
 " vim-colors-solarized
 set background=light
@@ -291,6 +315,7 @@ endfunction
 
 augroup filetype_python
     autocmd!
+    autocmd FileType python setlocal fdm=indent
     autocmd FileType python nnoremap <buffer> <localleader>r :call RunWithPython('!{python_path} %')<cr>
     autocmd FileType python vnoremap <buffer> <localleader>r :call RunWithPython('w !{python_path}')<cr>
     autocmd FileType python nnoremap <buffer> <localleader>i :call RunWithPython('!{python_path}')<cr>
@@ -306,6 +331,7 @@ augroup END
 
 augroup filetype_vim
     autocmd!
+    autocmd FileType vim setlocal fdm=marker
     autocmd BufWritePost vimrc,.vimrc so <afile>
     autocmd FileType vim nnoremap <buffer> <localleader>r :so %<cr>
     command! -nargs=1 Vimdoc help <args>
@@ -414,6 +440,12 @@ augroup END
 augroup filetype_ledger
     autocmd!
     autocmd FileType ledger nnoremap <buffer> <localleader>r :!ledger -f % balance<cr>
+augroup END
+
+augroup filetype_restclient
+    autocmd!
+    autocmd BufNewFile,BufReadPost *.http set filetype=restclient
+    autocmd FileType restclient nnoremap <buffer> <localleader>r :Restclient<cr>
 augroup END
 
 let g:rfc_folding = 1
